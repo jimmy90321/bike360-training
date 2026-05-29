@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { collection, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { useState, useEffect } from 'react';
+import { collection, addDoc, updateDoc, doc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
 export default function AddRideForm({ riderName }) {
@@ -10,17 +10,33 @@ export default function AddRideForm({ riderName }) {
   const [mood, setMood] = useState('great');
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [currentKm, setCurrentKm] = useState({ totalKm: 0, weeklyKm: 0 });
+
+  useEffect(() => {
+    if (!riderName) return;
+    const riderRef = doc(db, 'riders', riderName);
+    const unsub = onSnapshot(riderRef, (snap) => {
+      if (snap.exists()) {
+        setCurrentKm({
+          totalKm: snap.data().totalKm || 0,
+          weeklyKm: snap.data().weeklyKm || 0,
+        });
+      }
+    });
+    return () => unsub();
+  }, [riderName]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!distance || !time) return;
+    if (!distance) return;
     setSubmitting(true);
 
     try {
       const ridesRef = collection(db, 'riders', riderName, 'rides');
       await addDoc(ridesRef, {
+        date: new Date().toISOString(),
         distance: parseFloat(distance),
-        time: parseFloat(time),
+        time: time ? parseFloat(time) : null,
         location,
         status,
         mood,
@@ -28,11 +44,11 @@ export default function AddRideForm({ riderName }) {
         createdAt: serverTimestamp(),
       });
 
-      // update weekly total
       const riderRef = doc(db, 'riders', riderName);
       await updateDoc(riderRef, {
-        weeklyKm: (rider?.weeklyKm || 0) + parseFloat(distance),
-        totalKm: (rider?.totalKm || 0) + parseFloat(distance),
+        weeklyKm: (currentKm.weeklyKm || 0) + parseFloat(distance),
+        totalKm: (currentKm.totalKm || 0) + parseFloat(distance),
+        lastUpdated: serverTimestamp(),
       });
 
       setDistance('');
@@ -50,7 +66,7 @@ export default function AddRideForm({ riderName }) {
       <h3>➕ 新增騎乘記錄</h3>
       <div className="form-row">
         <input type="number" placeholder="里程 (km)" value={distance} onChange={e => setDistance(e.target.value)} step="0.1" required />
-        <input type="number" placeholder="時間 (分鐘)" value={time} onChange={e => setTime(e.target.value)} required />
+        <input type="number" placeholder="時間 (分鐘)" value={time} onChange={e => setTime(e.target.value)} />
       </div>
       <input type="text" placeholder="地點" value={location} onChange={e => setLocation(e.target.value)} />
       <div className="form-row">
@@ -60,9 +76,9 @@ export default function AddRideForm({ riderName }) {
           <option value="intervals">間歇</option>
         </select>
         <select value={mood} onChange={e => setMood(e.target.value)}>
-          <option value="great">很棒 💪</option>
-          <option value="good">不錯 🙂</option>
-          <option value="tough">辛苦 💪</option>
+          <option value="great">很棒</option>
+          <option value="good">不錯</option>
+          <option value="tough">辛苦</option>
         </select>
       </div>
       <textarea placeholder="備註..." value={note} onChange={e => setNote(e.target.value)} rows={2} />
