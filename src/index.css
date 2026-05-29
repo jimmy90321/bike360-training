@@ -1,0 +1,177 @@
+:root {
+  --bg: #0a0f1a;
+  --card: #111827;
+  --primary: #06d6a0;
+  --accent: #118ab2;
+  --text: #e0e7ef;
+  --muted: #6b7280;
+  --border: #1f2937;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+#root { min-height: 100vh; }
+
+.app { max-width: 480px; margin: 0 auto; padding: 16px; }
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+.nav span { font-weight: 700; font-size: 1.1rem; }
+.nav a { color: var(--primary); text-decoration: none; margin-left: 16px; font-size: 0.9rem; }
+
+.home {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  text-align: center;
+}
+.logo { margin-bottom: 32px; }
+.logo-icon { font-size: 4rem; display: block; margin-bottom: 8px; }
+.logo h1 { font-size: 2.5rem; font-weight: 800; color: var(--primary); }
+.logo p { color: var(--muted); margin-top: 8px; }
+
+.enter-form { width: 100%; max-width: 320px; }
+.enter-form input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 1rem;
+  margin-bottom: 12px;
+  outline: none;
+}
+.enter-form input:focus { border-color: var(--primary); }
+.enter-form button {
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  border: none;
+  background: var(--primary);
+  color: #000;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.board-header { text-align: center; margin-bottom: 20px; }
+.board-header h1 { font-size: 1.6rem; font-weight: 800; }
+.board-header p { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
+
+.leaderboard { display: flex; flex-direction: column; gap: 8px; }
+.rider-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--card);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+.rider-row.rank-1 { border-color: var(--primary); background: rgba(6,214,160,0.08); }
+.rider-row.rank-2 { border-color: #c0c0c0; }
+.rider-row.rank-3 { border-color: #cd7f32; }
+.rider-row .rank { width: 32px; font-weight: 700; color: var(--muted); }
+.rider-row .name { flex: 1; font-weight: 600; }
+.rider-row .km { font-size: 1.2rem; font-weight: 700; color: var(--primary); }
+.rider-row .km small { font-size: 0.75rem; color: var(--muted); }
+
+.stats-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.stat {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+}
+.stat .val { font-size: 1.8rem; font-weight: 800; color: var(--primary); display: block; }
+.stat .label { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+
+.week-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+}
+.week-tabs button {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.week-tabs button.active {
+  background: var(--primary);
+  color: #000;
+  border-color: var(--primary);
+  font-weight: 700;
+}
+
+.ride-form {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 20px;
+}
+.ride-form h3 { margin-bottom: 16px; color: var(--primary); }
+.ride-form input,
+.ride-form select,
+.ride-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+  outline: none;
+  resize: none;
+}
+.ride-form input:focus,
+.ride-form select:focus,
+.ride-form textarea:focus { border-color: var(--primary); }
+.form-row { display: flex; gap: 10px; }
+.form-row input { margin-bottom: 10px; }
+.ride-form button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  background: var(--primary);
+  color: #000;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 6px;
+}
+.ride-form button:disabled { opacity: 0.5; }
+
+.loading { text-align: center; padding: 40px; color: var(--muted); }
+.empty { text-align: center; padding: 40px; color: var(--muted); }
+
+@media (max-width: 480px) {
+  .app { padding: 12px; }
+}
