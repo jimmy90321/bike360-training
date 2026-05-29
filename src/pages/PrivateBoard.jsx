@@ -1,28 +1,37 @@
 import { useState, useEffect } from 'react';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import StatsBar from '../components/StatsBar';
 import AddRideForm from '../components/AddRideForm';
+import WeekTabs from '../components/WeekTabs';
+import RideList from '../components/RideList';
 
 export default function PrivateBoard({ riderName }) {
   const [rider, setRider] = useState(null);
-  const [rides, setRides] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedWeek, setSelectedWeek] = useState(0);
 
   useEffect(() => {
     if (!riderName) return;
-    const ref = doc(db, 'riders', riderName);
-    const unsub = onSnapshot(ref, (snap) => {
-      if (snap.exists()) {
-        setRider({ id: snap.id, ...snap.data() });
-      }
+
+    // Auto-create rider doc if not exists
+    const riderRef = doc(db, 'riders', riderName);
+    setDoc(riderRef, {
+      name: riderName,
+      totalKm: 0,
+      weeklyKm: 0,
+      createdAt: serverTimestamp(),
+    }, { merge: true });
+
+    const unsub = onSnapshot(riderRef, (snap) => {
+      setRider(snap.exists() ? { id: snap.id, ...snap.data() } : null);
       setLoading(false);
     });
+
     return () => unsub();
   }, [riderName]);
 
   if (loading) return <div className="loading">載入中...</div>;
-  if (!rider) return <div className="loading">找不到騎士資料</div>;
 
   return (
     <div className="board private-board">
@@ -32,6 +41,8 @@ export default function PrivateBoard({ riderName }) {
       </header>
       <StatsBar rider={rider} />
       <AddRideForm riderName={riderName} />
+      <WeekTabs selected={selectedWeek} onChange={setSelectedWeek} />
+      <RideList riderName={riderName} selectedWeek={selectedWeek} />
     </div>
   );
 }
