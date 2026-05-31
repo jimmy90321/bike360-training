@@ -98,6 +98,10 @@ export default function AddRideForm({ riderName }) {
           <option value="tough">辛苦</option>
         </select>
       </div>
+      <div className="form-row" style={{fontSize:'0.75rem',color:'#6b7280',marginBottom:'8px'}}>
+        <span>狀態</span>
+        <span>心情</span>
+      </div>
       <textarea placeholder="備註..." value={note} onChange={e => setNote(e.target.value)} rows={2} />
       <button type="submit" disabled={submitting}>{submitting ? '上傳中...' : '記錄騎乘'}</button>
     </form>
