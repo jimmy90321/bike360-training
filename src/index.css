@@ -110,7 +110,8 @@ body {
 .week-tabs {
   display: flex;
   gap: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  margin-top: 24px;
   overflow-x: auto;
 }
 .week-tabs button {
@@ -171,6 +172,7 @@ body {
 
 .loading { text-align: center; padding: 40px; color: var(--muted); }
 .empty { text-align: center; padding: 40px; color: var(--muted); }
+.empty-rides { text-align: center; padding: 40px 20px; color: var(--muted); margin-top: 20px; }
 
 @media (max-width: 480px) {
   .app { padding: 12px; }
