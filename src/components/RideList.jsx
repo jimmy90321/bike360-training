@@ -1,16 +1,34 @@
 import { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, where } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
 function getWeekDates(offset) {
   const now = new Date();
-  const monday = new Date(now);
-  monday.setDate(now.getDate() - now.getDay() + 1 - offset * 7);
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const date = now.getDate();
+  const day = now.getDay();
+
+  // Find Monday of the target week (offset 0 = current week)
+  // day: 0=Sun, 1=Mon, ..., 6=Sat
+  // We want Monday as first day, so if day is Sunday (0), go back 6 days, else (day - 1)
+  const daysToSubtract = day === 0 ? 6 : day - 1;
+  const monday = new Date(year, month, date - daysToSubtract - offset * 7);
   monday.setHours(0, 0, 0, 0);
+
+  // Find Sunday of the target week
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
   sunday.setHours(23, 59, 59, 999);
+
   return { start: monday, end: sunday };
+}
+
+function getWeekLabel(offset) {
+  if (offset === 0) return '本週';
+  if (offset === 1) return '上週';
+  if (offset === 2) return '2週前';
+  return '3週前';
 }
 
 function formatDate(dateStr) {
@@ -28,10 +46,7 @@ export default function RideList({ riderName, selectedWeek }) {
 
     const { start, end } = getWeekDates(selectedWeek);
     const ridesRef = collection(db, 'riders', riderName, 'rides');
-    const q = query(
-      ridesRef,
-      orderBy('date', 'desc')
-    );
+    const q = query(ridesRef, orderBy('date', 'desc'));
 
     const unsub = onSnapshot(q, (snap) => {
       const data = snap.docs
@@ -57,7 +72,7 @@ export default function RideList({ riderName, selectedWeek }) {
     <div className="ride-list">
       <div className="ride-list-header">
         <h3>騎乘記錄</h3>
-        <span className="week-total">本週累積 {totalKm.toFixed(1)} km</span>
+        <span className="week-total">{getWeekLabel(selectedWeek)}累積 {totalKm.toFixed(1)} km</span>
       </div>
       {rides.map(ride => (
         <div key={ride.id} className="ride-card">
