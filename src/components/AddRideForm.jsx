@@ -11,6 +11,7 @@ export default function AddRideForm({ riderName }) {
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [currentKm, setCurrentKm] = useState({ totalKm: 0, weeklyKm: 0 });
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!riderName) return;
@@ -28,12 +29,17 @@ export default function AddRideForm({ riderName }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!distance) return;
+    setError('');
+    if (!distance) {
+      setError('請輸入里程');
+      return;
+    }
     setSubmitting(true);
 
     try {
+      console.log('Submitting ride:', { riderName, distance, time, location });
       const ridesRef = collection(db, 'riders', riderName, 'rides');
-      await addDoc(ridesRef, {
+      const docRef = await addDoc(ridesRef, {
         date: new Date().toISOString(),
         distance: parseFloat(distance),
         time: time ? parseFloat(time) : null,
@@ -43,6 +49,7 @@ export default function AddRideForm({ riderName }) {
         note,
         createdAt: serverTimestamp(),
       });
+      console.log('Ride added, doc id:', docRef.id);
 
       const riderRef = doc(db, 'riders', riderName);
       await updateDoc(riderRef, {
@@ -50,13 +57,16 @@ export default function AddRideForm({ riderName }) {
         totalKm: (currentKm.totalKm || 0) + parseFloat(distance),
         lastUpdated: serverTimestamp(),
       });
+      console.log('Rider updated');
 
       setDistance('');
       setTime('');
       setLocation('');
       setNote('');
+      alert('騎乘記錄已上傳！');
     } catch (err) {
-      console.error(err);
+      console.error('Error:', err);
+      setError('上傳失敗：' + err.toString());
     }
     setSubmitting(false);
   };
@@ -64,6 +74,7 @@ export default function AddRideForm({ riderName }) {
   return (
     <form className="ride-form" onSubmit={handleSubmit}>
       <h3>➕ 新增騎乘記錄</h3>
+      {error && <div className="error-msg">{error}</div>}
       <div className="form-row">
         <input type="number" placeholder="里程 (km)" value={distance} onChange={e => setDistance(e.target.value)} step="0.1" required />
         <input type="number" placeholder="時間 (分鐘)" value={time} onChange={e => setTime(e.target.value)} />
