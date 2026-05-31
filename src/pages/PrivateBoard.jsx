@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { doc, setDoc, onSnapshot, serverTimestamp, getDoc } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot, serverTimestamp, getDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { getYearWeek } from '../utils/week';
 import StatsBar from '../components/StatsBar';
 import AddRideForm from '../components/AddRideForm';
 import WeekTabs from '../components/WeekTabs';
@@ -15,31 +16,41 @@ export default function PrivateBoard({ riderName }) {
     if (!riderName) return;
 
     const riderRef = doc(db, 'riders', riderName);
+    const yearWeek = getYearWeek(new Date());
+    const weekRef = doc(db, 'riders', riderName, 'weeklyData', yearWeek);
 
-    // Initialize document if it doesn't exist
+    // Initialize rider doc if not exists
     getDoc(riderRef).then(snap => {
       if (!snap.exists()) {
         setDoc(riderRef, {
           name: riderName,
           totalKm: 0,
-          weeklyKm: 0,
           createdAt: serverTimestamp(),
         });
       }
     });
 
-    // Listen for real-time updates
-    const unsub = onSnapshot(riderRef, (snap) => {
+    // Listen for rider totalKm changes
+    const unsubRider = onSnapshot(riderRef, (snap) => {
       if (snap.exists()) {
-        setRider({
+        setRider(prev => ({
+          ...prev,
           totalKm: snap.data().totalKm || 0,
-          weeklyKm: snap.data().weeklyKm || 0,
-        });
+        }));
       }
+    });
+
+    // Listen for current week km
+    const unsubWeek = onSnapshot(weekRef, (snap) => {
+      const weeklyKm = snap.exists() ? (snap.data().km || 0) : 0;
+      setRider(prev => ({ ...prev, weeklyKm }));
       setLoading(false);
     });
 
-    return () => unsub();
+    return () => {
+      unsubRider();
+      unsubWeek();
+    };
   }, [riderName]);
 
   if (loading) return <div className="loading">載入中...</div>;

@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
-import { collection, addDoc, updateDoc, doc, serverTimestamp, onSnapshot, getDoc } from 'firebase/firestore';
+import { useState } from 'react';
+import { collection, addDoc, updateDoc, doc, serverTimestamp, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { getYearWeek } from '../utils/week';
 
 export default function AddRideForm({ riderName }) {
   const [distance, setDistance] = useState('');
@@ -11,10 +12,12 @@ export default function AddRideForm({ riderName }) {
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     if (!distance) {
       setError('請輸入里程');
       return;
@@ -22,30 +25,41 @@ export default function AddRideForm({ riderName }) {
     setSubmitting(true);
 
     try {
-      const riderRef = doc(db, 'riders', riderName);
+      const now = new Date();
+      const yearWeek = getYearWeek(now);
+      const weekRef = doc(db, 'riders', riderName, 'weeklyData', yearWeek);
 
-      // Read latest values directly from Firestore
-      const snap = await getDoc(riderRef);
-      const currentKm = {
-        totalKm: snap.data()?.totalKm || 0,
-        weeklyKm: snap.data()?.weeklyKm || 0,
-      };
+      // Read current week data
+      const snap = await getDoc(weekRef);
+      const currentWeekKm = snap.data()?.km || 0;
 
+      // Add ride record
       const ridesRef = collection(db, 'riders', riderName, 'rides');
       await addDoc(ridesRef, {
-        date: new Date().toISOString(),
+        date: now.toISOString(),
         distance: parseFloat(distance),
         time: time ? parseFloat(time) : null,
         location,
         status,
         mood,
         note,
+        yearWeek,
         createdAt: serverTimestamp(),
       });
 
+      // Update weekly total
+      await setDoc(weekRef, {
+        km: currentWeekKm + parseFloat(distance),
+        weekStart: getWeekStartDate(now),
+        updatedAt: serverTimestamp(),
+      });
+
+      // Update rider's totalKm (cumulative, never reset)
+      const riderRef = doc(db, 'riders', riderName);
+      const riderSnap = await getDoc(riderRef);
+      const currentTotalKm = riderSnap.data()?.totalKm || 0;
       await updateDoc(riderRef, {
-        weeklyKm: currentKm.weeklyKm + parseFloat(distance),
-        totalKm: currentKm.totalKm + parseFloat(distance),
+        totalKm: currentTotalKm + parseFloat(distance),
         lastUpdated: serverTimestamp(),
       });
 
@@ -53,10 +67,11 @@ export default function AddRideForm({ riderName }) {
       setTime('');
       setLocation('');
       setNote('');
-      alert('騎乘記錄已上傳！');
+      setSuccess('已上傳！');
+      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       console.error('Error:', err);
-      setError('上傳失敗：' + err.toString());
+      setError('上傳失敗：' + err.message);
     }
     setSubmitting(false);
   };
@@ -64,7 +79,8 @@ export default function AddRideForm({ riderName }) {
   return (
     <form className="ride-form" onSubmit={handleSubmit}>
       <h3>➕ 新增騎乘記錄</h3>
-      {error && <div className="error-msg">{error}</div>}
+      {error && <div className="error-msg" style={{color:'red',marginBottom:'10px'}}>{error}</div>}
+      {success && <div className="success-msg" style={{color:'#06d6a0',marginBottom:'10px'}}>{success}</div>}
       <div className="form-row">
         <input type="number" placeholder="里程 (km)" value={distance} onChange={e => setDistance(e.target.value)} step="0.1" required />
         <input type="number" placeholder="時間 (分鐘)" value={time} onChange={e => setTime(e.target.value)} />
@@ -86,4 +102,13 @@ export default function AddRideForm({ riderName }) {
       <button type="submit" disabled={submitting}>{submitting ? '上傳中...' : '記錄騎乘'}</button>
     </form>
   );
+}
+
+function getWeekStartDate(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString().split('T')[0];
 }
