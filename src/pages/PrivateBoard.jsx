@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { doc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot, serverTimestamp, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import StatsBar from '../components/StatsBar';
 import AddRideForm from '../components/AddRideForm';
@@ -7,24 +7,35 @@ import WeekTabs from '../components/WeekTabs';
 import RideList from '../components/RideList';
 
 export default function PrivateBoard({ riderName }) {
-  const [rider, setRider] = useState(null);
+  const [rider, setRider] = useState({ totalKm: 0, weeklyKm: 0 });
   const [loading, setLoading] = useState(true);
   const [selectedWeek, setSelectedWeek] = useState(0);
 
   useEffect(() => {
     if (!riderName) return;
 
-    // Auto-create rider doc if not exists
     const riderRef = doc(db, 'riders', riderName);
-    setDoc(riderRef, {
-      name: riderName,
-      totalKm: 0,
-      weeklyKm: 0,
-      createdAt: serverTimestamp(),
-    }, { merge: true });
 
+    // Initialize document if it doesn't exist
+    getDoc(riderRef).then(snap => {
+      if (!snap.exists()) {
+        setDoc(riderRef, {
+          name: riderName,
+          totalKm: 0,
+          weeklyKm: 0,
+          createdAt: serverTimestamp(),
+        });
+      }
+    });
+
+    // Listen for real-time updates
     const unsub = onSnapshot(riderRef, (snap) => {
-      setRider(snap.exists() ? { id: snap.id, ...snap.data() } : null);
+      if (snap.exists()) {
+        setRider({
+          totalKm: snap.data().totalKm || 0,
+          weeklyKm: snap.data().weeklyKm || 0,
+        });
+      }
       setLoading(false);
     });
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, addDoc, updateDoc, doc, serverTimestamp, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, serverTimestamp, onSnapshot, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
 export default function AddRideForm({ riderName }) {
@@ -10,22 +10,7 @@ export default function AddRideForm({ riderName }) {
   const [mood, setMood] = useState('great');
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [currentKm, setCurrentKm] = useState({ totalKm: 0, weeklyKm: 0 });
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (!riderName) return;
-    const riderRef = doc(db, 'riders', riderName);
-    const unsub = onSnapshot(riderRef, (snap) => {
-      if (snap.exists()) {
-        setCurrentKm({
-          totalKm: snap.data().totalKm || 0,
-          weeklyKm: snap.data().weeklyKm || 0,
-        });
-      }
-    });
-    return () => unsub();
-  }, [riderName]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -37,9 +22,17 @@ export default function AddRideForm({ riderName }) {
     setSubmitting(true);
 
     try {
-      console.log('Submitting ride:', { riderName, distance, time, location });
+      const riderRef = doc(db, 'riders', riderName);
+
+      // Read latest values directly from Firestore
+      const snap = await getDoc(riderRef);
+      const currentKm = {
+        totalKm: snap.data()?.totalKm || 0,
+        weeklyKm: snap.data()?.weeklyKm || 0,
+      };
+
       const ridesRef = collection(db, 'riders', riderName, 'rides');
-      const docRef = await addDoc(ridesRef, {
+      await addDoc(ridesRef, {
         date: new Date().toISOString(),
         distance: parseFloat(distance),
         time: time ? parseFloat(time) : null,
@@ -49,15 +42,12 @@ export default function AddRideForm({ riderName }) {
         note,
         createdAt: serverTimestamp(),
       });
-      console.log('Ride added, doc id:', docRef.id);
 
-      const riderRef = doc(db, 'riders', riderName);
       await updateDoc(riderRef, {
-        weeklyKm: (currentKm.weeklyKm || 0) + parseFloat(distance),
-        totalKm: (currentKm.totalKm || 0) + parseFloat(distance),
+        weeklyKm: currentKm.weeklyKm + parseFloat(distance),
+        totalKm: currentKm.totalKm + parseFloat(distance),
         lastUpdated: serverTimestamp(),
       });
-      console.log('Rider updated');
 
       setDistance('');
       setTime('');
