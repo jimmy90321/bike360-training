@@ -3,20 +3,17 @@ import { getFirestore } from 'firebase/firestore';
 import { getAuth, signInAnonymously } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+  apiKey: "AIzaSyCXYT0q7MElxaguX3g7vn47Sb2ryENkOv0",
+  authDomain: "tpa360-9407e.firebaseapp.com",
+  projectId: "tpa360-9407e",
+  storageBucket: "tpa360-9407e.firebasestorage.app",
+  messagingSenderId: "715387194045",
+  appId: "1:715387194045:web:a06f1629137722591a85d4",
+  measurementId: "G-N313PY2S4W",
 };
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 
-// Auto sign in anonymously - don't crash if it fails
-signInAnonymously(auth).catch(() => {
-  // Anonymous auth may not be enabled - that's ok for now
-});
+signInAnonymously(auth).catch(() => {});
