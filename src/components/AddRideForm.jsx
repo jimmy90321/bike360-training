@@ -87,20 +87,24 @@ export default function AddRideForm({ riderName }) {
       </div>
       <input type="text" placeholder="地點" value={location} onChange={e => setLocation(e.target.value)} />
       <div className="form-row">
-        <select value={status} onChange={e => setStatus(e.target.value)}>
-          <option value="normal">正常</option>
-          <option value="long">長途</option>
-          <option value="intervals">間歇</option>
-        </select>
-        <select value={mood} onChange={e => setMood(e.target.value)}>
-          <option value="great">很棒</option>
-          <option value="good">不錯</option>
-          <option value="tough">辛苦</option>
-        </select>
-      </div>
-      <div className="form-row" style={{fontSize:'0.75rem',color:'#6b7280',marginBottom:'8px'}}>
-        <span>狀態</span>
-        <span>心情</span>
+        <div style={{flex:1}}>
+          <div style={{fontSize:'0.75rem',color:'#6b7280',marginBottom:'4px',textAlign:'left'}}>訓練後狀態</div>
+          <select value={status} onChange={e => setStatus(e.target.value)}>
+            <option value="boring">無聊</option>
+            <option value="easy">輕鬆</option>
+            <option value="medium">中等</option>
+            <option value="tired">稍累</option>
+            <option value="hard">艱難</option>
+          </select>
+        </div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:'0.75rem',color:'#6b7280',marginBottom:'4px',textAlign:'left'}}>心情</div>
+          <select value={mood} onChange={e => setMood(e.target.value)}>
+            <option value="great">很棒</option>
+            <option value="good">不錯</option>
+            <option value="tough">辛苦</option>
+          </select>
+        </div>
       </div>
       <textarea placeholder="備註..." value={note} onChange={e => setNote(e.target.value)} rows={2} />
       <button type="submit" disabled={submitting}>{submitting ? '上傳中...' : '記錄騎乘'}</button>
